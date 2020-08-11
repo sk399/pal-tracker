@@ -14,8 +14,9 @@ namespace PalTrackerTests
         {
             Environment.SetEnvironmentVariable("WELCOME_MESSAGE", "hello from integration test");
             _testClient = IntegrationTestServer.Start().CreateClient();
-        }
 
+        }
+        
         [Fact]
         public async void ReturnsMessage()
         {

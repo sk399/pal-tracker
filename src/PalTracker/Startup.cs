@@ -1,4 +1,5 @@
 using System;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,6 +27,17 @@ namespace PalTracker
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            var message = Configuration.GetValue<string>("WELCOME_MESSAGE");
+            if(string.IsNullOrEmpty(message))
+            {
+                throw new ApplicationException("WELCOME_MESSAGE not configured.");
+            }
+         services.AddSingleton(sp => new WelcomeMessage(message));
+         var port = Configuration.GetValue<string>("PORT");
+         var memoryLimit = Configuration.GetValue<string>("MEMORY_LIMIT");
+         var cfInstanceIndex = Configuration.GetValue<string>("CF_INSTANCE_INDEX");
+         var cfInstanceAddr = Configuration.GetValue<string>("CF_INSTANCE_ADDR");
+         services.AddSingleton(x=> new CloudFoundryInfo(port,memoryLimit,cfInstanceIndex,cfInstanceAddr));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -38,6 +50,7 @@ namespace PalTracker
 
             app.UseHttpsRedirection();
 
+ 
             app.UseRouting();
 
             app.UseAuthorization();
@@ -46,6 +59,7 @@ namespace PalTracker
             {
                 endpoints.MapControllers();
             });
+
         }
     }
 }
