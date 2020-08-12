@@ -7,9 +7,13 @@ namespace PalTracker
     {
         private readonly ITimeEntryRepository _repository;
 
-        public TimeEntryController(ITimeEntryRepository repository)
+        private readonly IOperationCounter<TimeEntry> _operationCounter;
+
+        public TimeEntryController(ITimeEntryRepository repository, IOperationCounter<TimeEntry> operationCounter)
         {
             _repository = repository;
+
+            _operationCounter = operationCounter;
         }
 
         [HttpPost]
@@ -17,25 +21,31 @@ namespace PalTracker
         {
             var createdTimeEntry = _repository.Create(timeEntry);
 
-            return CreatedAtRoute("GetTimeEntry", new {id = createdTimeEntry.Id}, createdTimeEntry);
+            _operationCounter.Increment(TrackedOperation.Create);
+
+            return CreatedAtRoute("GetTimeEntry", new { id = createdTimeEntry.Id }, createdTimeEntry);
         }
 
         [HttpGet("{id}", Name = "GetTimeEntry")]
         public IActionResult Read(long id)
         {
-            return _repository.Contains(id) ? (IActionResult) Ok(_repository.Find(id)) : NotFound();
+            _operationCounter.Increment(TrackedOperation.Read);
+
+            return _repository.Contains(id) ? (IActionResult)Ok(_repository.Find(id)) : NotFound();
         }
 
         [HttpGet]
         public IActionResult List()
         {
+            _operationCounter.Increment(TrackedOperation.List);
             return Ok(_repository.List());
         }
 
         [HttpPut("{id}")]
         public IActionResult Update(long id, [FromBody] TimeEntry timeEntry)
         {
-            return _repository.Contains(id) ? (IActionResult) Ok(_repository.Update(id, timeEntry)) : NotFound();
+            _operationCounter.Increment(TrackedOperation.Update);
+            return _repository.Contains(id) ? (IActionResult)Ok(_repository.Update(id, timeEntry)) : NotFound();
         }
 
         [HttpDelete("{id}")]
@@ -45,7 +55,7 @@ namespace PalTracker
             {
                 return NotFound();
             }
-
+            _operationCounter.Increment(TrackedOperation.Delete);
             _repository.Delete(id);
 
             return NoContent();
